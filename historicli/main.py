@@ -3,6 +3,7 @@ import click
 from termcolor import colored, cprint
 from pprint import pprint
 from operator import itemgetter
+from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
 TIMELINE_PATH = '/home/tom/code/python/history_timeline/historicli/timeline.csv'
 COLORS = {
@@ -14,16 +15,16 @@ COLORS = {
     'L': ('black', 'on_magenta', 'magenta'),
     'S': ('black', 'on_green', 'green')
 }
-COL_IDX = {
-    'epoch': 0,
-    'circa': 1,
-    'year': 2,
-    'category': 3,
-    'description': 4
-}
 
 def chrono_sort(timeline_list):
-    return sorted(timeline_list, key=lambda row: row[2])
+    # sort bc items
+    bc_list = [item for item in timeline_list if item[0] == 'BC']
+    bc_list = sorted(bc_list, key=lambda row: int(row[2]), reverse=True)
+    # sort ad items
+    ad_list = [item for item in timeline_list if item[0] == 'AD']
+    ad_list = sorted(ad_list, key=lambda row: int(row[2]))
+    # join and return
+    return bc_list + ad_list
 
 def filter_timeline_list(by, matcher, timeline_list):
     '''returns a timeline_list that has been filtered from the given
@@ -32,26 +33,37 @@ def filter_timeline_list(by, matcher, timeline_list):
     search_index = COL_IDX[by]
     return [row for row in timeline_list if matcher in row[search_index]]
 
-def get_timeline_list():
-    '''Reads the timeline.csv and returns a list of the rows as lists'''
+def get_timeline_list(source=TIMELINE_PATH):
+    '''Reads the source file and returns a list of the rows as lists.
+    Defaults to reading the main timeline path but can read a different
+    csv for importing mass dates'''
     timeline_list = []
-    with open(TIMELINE_PATH, 'r', encoding='utf-8', newline='') as csv_file:
+    with open(source, 'r', encoding='utf-8', newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
         for row in reader:
             timeline_list.append(row)
     return timeline_list
 
 
+
 def format_timeline_list(timeline_list):
     '''formats the passed timeline_list and returns the output'''
+    def pad_year(year):
+        '''pad year with left spaces until 4 chars long'''
+        if len(year) < 4:
+            while len(year) < 4:
+                year = ' ' + year
+        return year
     output = []
     for row in timeline_list:
         formatted_row = ''
         for index, item in enumerate(row):
             if index == 0:  # epoch
                 formatted_row += colored(item, 'white', attrs=['dark', 'bold'])
-            elif index < 3:  # circa & year
+            elif index == 1:  # circa
                 formatted_row += colored(item, attrs=['bold'])
+            elif index == 2:  # year
+                formatted_row += colored(pad_year(item), attrs=['bold'])
             elif index == 3:  # category
                 cat_color, highlight, _ = COLORS[item]
                 formatted_row += ' ' + \
@@ -72,7 +84,7 @@ def append_row(row):
 
 def get_new_row_from_user():
     return {
-        'year': int(input('Year: ')),
+        'year': input('Year: '),
         'category': input('Category: '),
         'description': input('Description: '),
         'tags': input('Tags (comma-separated): ').lower()
@@ -82,14 +94,53 @@ def get_new_row_from_user():
     # get description
     # get any tags
 
-
-def print_timeline():
-    output = format_timeline_list(get_timeline_list())
+def clean_input(input):
+    '''cleans up user input and returns a row;
+    this function is really ugly- refactor
+    '''
+    user_row = []
+    epoch, circa = ('', '')
+    year, category, description, tags = input.values()
+    year = str(year)
+    category = category.lower()
+    for matcher in BC_MATCHERS:
+        if matcher in year:
+            epoch = 'BC'
+            year = year.replace(matcher, '')
+            break
+        else:
+            epoch = 'AD'
+    user_row.append(epoch)
+    for matcher in CIRCA_MATCHERS:
+        if matcher in year:
+            circa = r'~'
+            year = year.replace(matcher, '')
+            break
+        else:
+            circa = ' '
+    user_row.append(circa)
+    user_row.append(year.strip())
+    for matcher in CAT_MATCHERS.keys():
+        if matcher.lower() in category:
+            category = CAT_MATCHERS[matcher]
+            break
+    user_row.append(category)
+    user_row.append(description.strip())
+    user_row.append(tags)
+    return user_row
+    
+@click.command()
+# @click.argument()
+def print_timeline(timeline_list=get_timeline_list()):
+    output = format_timeline_list(chrono_sort(timeline_list))
     for row in output:
-        print(row)
+        click.echo(row)
 
-user_row = get_new_row_from_user()
-print(user_row)
-# pprint(chrono_sort(filter_timeline_list('description', 'Bean', get_timeline_list())))
-# pprint(get_timeline_list())
-# append_row(['AD', '~', '1997', 'E', 'Ocarina of Time is released'])
+
+# @click.command()
+@click.option('-p', '--person',)
+def cli_echo():
+    pass
+
+if __name__ == '__main__':
+    print_timeline()
