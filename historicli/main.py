@@ -151,21 +151,28 @@ def clean_input(input):
 
 
 @click.command()
-@click.argument('start_year', default='10000bc')
+@click.argument('start_year', default='1000000bc')
+@click.option('-e', '--end-year', type=str)
 @click.option('-c', '--category', type=str)
-def print_timeline(start_year, category):
+def print_timeline(start_year, end_year, category):
     timeline_list = get_timeline_list()
 
-    if start_year:
-        # get only a list starting from that year
+    # if start_year:
+    for matcher in BC_MATCHERS:
+        if matcher in start_year:
+            start_year = '-' + start_year.replace(matcher, '').strip()
+            break
+    timeline_list = [row for row in timeline_list
+                     if int(row[0]) >= int(start_year)]
+
+    if end_year:
         for matcher in BC_MATCHERS:
-            if matcher in start_year:
-                start_year = '-' + start_year.replace(matcher, '').strip()
+            if matcher in end_year:
+                end_year = '-' + end_year.replace(matcher, '').strip()
                 break
         timeline_list = [row for row in timeline_list
-                         if int(row[0]) >= int(start_year)]
+                         if int(row[0]) < int(end_year)]
 
-    # TODO: use matchers
     if category:
         for matcher, cat in CAT_MATCHERS.items():
             if category.lower().strip() == matcher:
