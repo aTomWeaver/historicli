@@ -151,23 +151,27 @@ def clean_input(input):
 
 
 @click.command()
-@click.argument('start_year')
-@click.option('-p', '--person', type=str)
-def print_timeline(start_year, person):
-
-    # i should increase efficiency by only reading needed data
+@click.argument('start_year', default='10000bc')
+@click.option('-c', '--category', type=str)
+def print_timeline(start_year, category):
     timeline_list = get_timeline_list()
 
     if start_year:
         # get only a list starting from that year
-        if 'bc' in start_year:
-            start_year = start_year.replace('bc', '-').strip()
+        for matcher in BC_MATCHERS:
+            if matcher in start_year:
+                start_year = '-' + start_year.replace(matcher, '').strip()
+                break
         timeline_list = [row for row in timeline_list
                          if int(row[0]) >= int(start_year)]
 
-    if person:
-        timeline_list = filter_timeline_list('category', 'P', timeline_list)
-        timeline_list = filter_timeline_list('description', person,
+    # TODO: use matchers
+    if category:
+        for matcher, cat in CAT_MATCHERS.items():
+            if category.lower().strip() == matcher:
+                category = cat
+                break
+        timeline_list = filter_timeline_list('category', category,
                                              timeline_list)
 
     output = format_timeline_list(chrono_sort(timeline_list))
@@ -175,16 +179,5 @@ def print_timeline(start_year, person):
         click.echo(row)
 
 
-def cli_echo(start_year):
-    print(start_year)
-
-
-def ls():
-    print_timeline(get_timeline_list())
-
-
 if __name__ == '__main__':
-    # get_timeline_list()
-    # for row in format_timeline_list(chrono_sort(get_timeline_list())):
-    #     click.echo(row)
     print_timeline()

@@ -1,17 +1,17 @@
 COL_IDX = {
-    'epoch': 0,
-    'era': 0,
-    'e': 0,
+    # 'epoch': 0,
+    # 'era': 0,
+    # 'e': 0,
     'circa': 1,
     '~': 1,
     'ca': 1,
-    'year': 2,
-    'y': 2,
-    'yr': 2,
-    'anno': 2,
-    'category': 3,
-    'cat': 3,
-    'description': 4
+    'year': 0,
+    'y': 0,
+    'yr': 0,
+    'anno': 0,
+    'category': 2,
+    'cat': 2,
+    'description': 3
 }
 
 BC_MATCHERS = [
