@@ -1,11 +1,17 @@
 import csv
 import click
-from termcolor import colored, cprint
+from termcolor import colored
+import colored_traceback
+# from termcolor import cprint
 from pprint import pprint
-from operator import itemgetter
+# from operator import itemgetter
 from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
-TIMELINE_PATH = '/home/tom/code/python/history_timeline/historicli/timeline.csv'
+colored_traceback.add_hook()
+
+TIMELINE_PATH = ('/home/tom/code/python/history_timeline/historicli/'
+                 'timeline.csv')
+
 COLORS = {
     'P': ('black', 'on_white', None),
     'E': ('black', 'on_yellow', 'yellow'),
@@ -16,16 +22,18 @@ COLORS = {
     'S': ('black', 'on_green', 'green')
 }
 
-def get_timeline_list(source=TIMELINE_PATH):  # increase efficiency by not grabbing the whole file every time
+
+# increase efficiency by not grabbing the whole file every time
+def get_timeline_list(source=TIMELINE_PATH):
     '''Reads the source file and returns a list of the rows as lists.
     Defaults to reading the main timeline path but can read a different
     csv for importing mass dates'''
-    timeline_list = []
     with open(source, 'r', encoding='utf-8', newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
-        for row in reader:
-            timeline_list.append(row)
+        timeline_list = [row for row in reader]
+    print(timeline_list)
     return timeline_list
+
 
 def convert_bc(bc_list, to):
     if to == 'negative_int_list':
@@ -35,6 +43,7 @@ def convert_bc(bc_list, to):
         for row in bc_list:
             row[2] = str(row[2]).replace('-', '').strip()
     return bc_list
+
 
 def chrono_sort(timeline_list):
     # sort bc items as negatives
@@ -50,12 +59,14 @@ def chrono_sort(timeline_list):
     # join and return
     return bc_list + ad_list
 
+
 def filter_timeline_list(by, matcher, timeline_list):
     '''returns a timeline_list that has been filtered from the given
     timeline_list by a given matcher
     '''
     search_index = COL_IDX[by]
     return [row for row in timeline_list if matcher in row[search_index]]
+
 
 def format_timeline_list(timeline_list):
     '''formats the passed timeline_list and returns the output'''
@@ -85,11 +96,13 @@ def format_timeline_list(timeline_list):
         output.append(formatted_row)
     return output
 
+
 def append_row(row):
     '''accepts an already cleaned row and appends it to the timeline.csv'''
     with open(TIMELINE_PATH, 'a', newline='') as timelinecsv:
         writer = csv.writer(timelinecsv, delimiter=',')
         writer.writerow(row)
+
 
 def get_new_row_from_user():
     return {
@@ -98,6 +111,7 @@ def get_new_row_from_user():
         'description': input('Description: '),
         'tags': input('Tags (comma-separated): ').lower()
     }
+
 
 def clean_input(input):
     '''cleans up user input and returns a row;
@@ -134,12 +148,16 @@ def clean_input(input):
     user_row.append(tags)
     return user_row
 
+
 @click.command()
 @click.argument('start_year')
-@click.option('-p', '--person', type=str) 
+@click.option('-p', '--person', type=str)
 def print_timeline(start_year, person):
-    timeline_list = get_timeline_list() # i should increase efficiency by only reading needed data 
+
+    # i should increase efficiency by only reading needed data
+    timeline_list = get_timeline_list()
     if start_year:
+        # TODO: Fix the comparison of start year to bc years
         if 'bc' in start_year:
             start_year = start_year.replace('bc', '-').strip()
         timeline_list = chrono_sort(timeline_list)
@@ -147,7 +165,7 @@ def print_timeline(start_year, person):
             [item for item in timeline_list if item[0] == 'BC'],
             'negative_int_list'
             )
-        timeline_list = [row for row in timeline_list if  > int(start_year)]
+        # timeline_list = [row for row in timeline_list if  > int(start_year)]
     if person:
         timeline_list = filter_timeline_list('category', 'P', timeline_list)
         timeline_list = filter_timeline_list('description', person, timeline_list)
@@ -155,11 +173,15 @@ def print_timeline(start_year, person):
     for row in output:
         click.echo(row)
 
+
 def cli_echo(start_year):
     print(start_year)
+
 
 def ls():
     print_timeline(get_timeline_list())
 
+
 if __name__ == '__main__':
-    print_timeline()
+    get_timeline_list()
+    # print_timeline()
