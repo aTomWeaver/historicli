@@ -8,7 +8,7 @@ from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
 colored_traceback.add_hook()
 
-TIMELINE_PATH = ('/home/tom/code/python/history_timeline/historicli/'
+TIMELINE_PATH = ('/home/tom/code/python/history_timeline/hs/'
                  'timeline.csv')
 
 COLORS = {
@@ -111,47 +111,87 @@ def get_new_row_from_user():
 
 
 def clean_input(input):
-    '''cleans up user input and returns a row;
-    this function is really ugly- refactor
+    '''
+    Cleans up user input and returns a row.
+    This function is really ugly- refactor.
     '''
     user_row = []
-    epoch, circa = ('', '')
+    circa = ''
     year, category, description, tags = input.values()
+    if not tags:
+        tags = ''
     year = str(year)
     category = category.lower()
+
     for matcher in BC_MATCHERS:
         if matcher in year:
-            epoch = 'BC'
-            year = year.replace(matcher, '')
+            year = '-' + year.replace(matcher, '')
             break
-        else:
-            epoch = 'AD'
-    user_row.append(epoch)
+        year = year.strip()
+
     for matcher in CIRCA_MATCHERS:
         if matcher in year:
             circa = r'~'
             year = year.replace(matcher, '')
             break
         else:
-            circa = ' '
+            circa = ''
+    user_row.append(year)
     user_row.append(circa)
-    user_row.append(year.strip())
+
     for matcher in CAT_MATCHERS.keys():
         if matcher.lower() in category:
             category = CAT_MATCHERS[matcher]
             break
+
     user_row.append(category)
     user_row.append(description.strip())
     user_row.append(tags)
     return user_row
 
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+
+@cli.group()
+def add():
+    pass
+
+
+@add.command()
+def prompt():
+    append_row(clean_input(get_new_row_from_user()))
+
+
+@add.command()
+@click.argument('year', required=True, type=str)
+@click.argument('category', required=True, type=str)
+@click.argument('description', required=True, type=str)
+@click.argument('tags', required=False, type=str)
+def manual(year, category, description, tags):
+    input = {
+            "year": year,
+            "category": year,
+            "description": description,
+            "tags": tags
+            }
+    append_row(clean_input(input))
+
+
+@cli.command()
 @click.argument('start_year', default='1000000bc')
-@click.option('-e', '--end-year', type=str)
-@click.option('-c', '--category', type=str)
-@click.option('-g', '--grep', type=str)
-def print_timeline(start_year, end_year, category, grep):
+@click.option('-e', '--end-year', type=str,
+              help='Get only results up to end year.')
+@click.option('-c', '--category', type=str,
+              help='Get only results in a given category.')
+@click.option('-g', '--grep', type=str,
+              help='Get only results containing given string.')
+def view(start_year, end_year, category, grep):
+    '''
+    Prints the timeline with given parameters.
+    '''
     timeline_list = get_timeline_list()
 
     # if start_year:
@@ -188,4 +228,4 @@ def print_timeline(start_year, end_year, category, grep):
 
 
 if __name__ == '__main__':
-    print_timeline()
+    cli()
