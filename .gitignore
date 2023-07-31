@@ -1,1 +1,3 @@
 project_env
+*.egg-info
+build

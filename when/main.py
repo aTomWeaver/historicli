@@ -3,7 +3,6 @@ import click
 from termcolor import colored
 import colored_traceback
 # from termcolor import cprint
-from pprint import pprint
 # from operator import itemgetter
 from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
@@ -23,7 +22,6 @@ COLORS = {
 }
 
 
-# increase efficiency by not grabbing the whole file every time
 def get_timeline_list(source=TIMELINE_PATH):
     '''Reads the source file and returns a list of the rows as lists.
     Defaults to reading the main timeline path but can read a different
@@ -34,7 +32,14 @@ def get_timeline_list(source=TIMELINE_PATH):
     return timeline_list
 
 
-def chrono_sort(timeline_list):
+def append_row(cleaned_row):
+    '''accepts an already cleaned row and appends it to the timeline.csv'''
+    with open(TIMELINE_PATH, 'a', newline='') as timelinecsv:
+        writer = csv.writer(timelinecsv, delimiter=',')
+        writer.writerow(cleaned_row)
+
+
+def sort_timeline_list(timeline_list):
     return sorted(
             timeline_list,
             key=lambda row: int(row[0])
@@ -79,10 +84,8 @@ def format_timeline_list(timeline_list):
                 else:
                     formatted_row += ' '
             # Year
-                formatted_row += colored(
-                        pad_year(row[index-1]),
-                        attrs=['bold']
-                        )
+                formatted_row += colored(pad_year(row[index-1]),
+                                         attrs=['bold'])
             # Category
             elif index == 2:
                 cat_color, highlight, _ = COLORS[item]
@@ -96,13 +99,6 @@ def format_timeline_list(timeline_list):
 
         output.append(formatted_row)
     return output
-
-
-def append_row(row):
-    '''accepts an already cleaned row and appends it to the timeline.csv'''
-    with open(TIMELINE_PATH, 'a', newline='') as timelinecsv:
-        writer = csv.writer(timelinecsv, delimiter=',')
-        writer.writerow(row)
 
 
 def get_new_row_from_user():
@@ -154,7 +150,8 @@ def clean_input(input):
 @click.argument('start_year', default='1000000bc')
 @click.option('-e', '--end-year', type=str)
 @click.option('-c', '--category', type=str)
-def print_timeline(start_year, end_year, category):
+@click.option('-g', '--grep', type=str)
+def print_timeline(start_year, end_year, category, grep):
     timeline_list = get_timeline_list()
 
     # if start_year:
@@ -181,7 +178,11 @@ def print_timeline(start_year, end_year, category):
         timeline_list = filter_timeline_list('category', category,
                                              timeline_list)
 
-    output = format_timeline_list(chrono_sort(timeline_list))
+    if grep:
+        timeline_list = [row for row in timeline_list
+                         if grep in row[3]+row[4]]
+
+    output = format_timeline_list(sort_timeline_list(timeline_list))
     for row in output:
         click.echo(row)
 
