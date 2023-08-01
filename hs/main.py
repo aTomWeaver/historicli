@@ -40,10 +40,11 @@ def append_row(cleaned_row):
 
 
 def sort_timeline_list(timeline_list):
-    return sorted(
-            timeline_list,
-            key=lambda row: int(row[0])
-            )
+    sorted_timeline = sorted(timeline_list, key=lambda row: int(row[0]))
+    with open(TIMELINE_PATH, 'w', encoding='utf-8', newline='') as csv_file:
+        writer = csv.writer(csv_file, delimiter=',')
+        writer.writerows(sorted_timeline)
+    return sorted_timeline
 
 
 def filter_timeline_list(by, matcher, timeline_list):
