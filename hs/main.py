@@ -41,9 +41,9 @@ def append_row(cleaned_row):
 
 def sort_timeline_list(timeline_list):
     sorted_timeline = sorted(timeline_list, key=lambda row: int(row[0]))
-    with open(TIMELINE_PATH, 'w', encoding='utf-8', newline='') as csv_file:
-        writer = csv.writer(csv_file, delimiter=',')
-        writer.writerows(sorted_timeline)
+    # with open(TIMELINE_PATH, 'w', encoding='utf-8', newline='') as csv_file:
+    #     writer = csv.writer(csv_file, delimiter=',')
+    #     writer.writerows(sorted_timeline)
     return sorted_timeline
 
 
@@ -119,8 +119,9 @@ def clean_input(input):
     user_row = []
     circa = ''
     year, category, description, tags = input.values()
+
     if not tags:
-        tags = ''
+        tags = 'none'
     year = str(year)
     category = category.lower()
 
@@ -137,14 +138,14 @@ def clean_input(input):
             break
         else:
             circa = ''
-    user_row.append(year)
-    user_row.append(circa)
 
     for matcher in CAT_MATCHERS.keys():
         if matcher.lower() in category:
             category = CAT_MATCHERS[matcher]
             break
 
+    user_row.append(year)
+    user_row.append(circa)
     user_row.append(category)
     user_row.append(description.strip())
     user_row.append(tags)
@@ -189,7 +190,7 @@ def manual(year, category, description, tags):
               help='Get only results in a given category.')
 @click.option('-g', '--grep', type=str,
               help='Get only results containing given string.')
-def view(start_year, end_year, category, grep):
+def ls(start_year, end_year, category, grep):
     '''
     Prints the timeline with given parameters.
     '''

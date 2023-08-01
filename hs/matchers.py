@@ -35,8 +35,9 @@ CIRCA_MATCHERS = [
 
 CAT_MATCHERS = {
     "p": "P",
-    "person": "P",
-    "people": "P",
+    "philosophy": "P",
+    "philosopher": "P",
+    "philosophers": "P",
     "e": "E",
     "event": "E",
     "events": "E",
@@ -53,4 +54,5 @@ CAT_MATCHERS = {
     "literature": "L",
     "s": "S",
     "science": "S",
+    "sciences": "S",
 }
