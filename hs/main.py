@@ -11,6 +11,9 @@ colored_traceback.add_hook()
 TIMELINE_PATH = ('/home/tom/code/python/history_timeline/hs/'
                  'timeline.csv')
 
+PERIODS_PATH = ('/home/tom/code/python/history_timeline/hs/'
+                'periods.csv')
+
 COLORS = {
     'P': ('black', 'on_white', None),
     'E': ('black', 'on_yellow', 'yellow'),
@@ -32,11 +35,19 @@ def get_timeline_list(source=TIMELINE_PATH):
     return timeline_list
 
 
-def append_row(cleaned_row):
+def append_row_to_timeline(cleaned_row):
     '''accepts an already cleaned row and appends it to the timeline.csv'''
     with open(TIMELINE_PATH, 'a', newline='') as timelinecsv:
         writer = csv.writer(timelinecsv, delimiter=',')
         writer.writerow(cleaned_row)
+
+
+def append_row_to_periods(cleaned_row):
+    '''accepts an already cleaned row and appends it to the periods.csv'''
+    with open(PERIODS_PATH, 'a', newline='') as periodscsv:
+        writer = csv.writer(periodscsv, delimiter=',')
+        writer.writerow(cleaned_row)
+    pass
 
 
 def sort_timeline_list(timeline_list):
@@ -111,7 +122,7 @@ def get_new_row_from_user():
     }
 
 
-def clean_input(input):
+def clean_timeline_input(input):
     '''
     Cleans up user input and returns a row.
     This function is really ugly- refactor.
@@ -129,7 +140,7 @@ def clean_input(input):
         if matcher in year:
             year = '-' + year.replace(matcher, '')
             break
-        year = year.strip()
+    year = year.strip()
 
     for matcher in CIRCA_MATCHERS:
         if matcher in year:
@@ -152,6 +163,15 @@ def clean_input(input):
     return user_row
 
 
+def convert_bc(year):
+    for matcher in BC_MATCHERS:
+        if matcher in year:
+            year = '-' + year.replace(matcher, '')
+            break
+        year = year.strip()
+    return year
+
+
 @click.group()
 def cli():
     pass
@@ -164,7 +184,7 @@ def add():
 
 @add.command()
 def prompt():
-    append_row(clean_input(get_new_row_from_user()))
+    append_row_to_timeline(clean_timeline_input(get_new_row_from_user()))
 
 
 @add.command()
@@ -179,7 +199,19 @@ def manual(year, category, description, tags):
             "description": description,
             "tags": tags
             }
-    append_row(clean_input(input))
+    append_row_to_timeline(clean_timeline_input(input))
+
+
+@add.command()
+@click.argument('start_year', required=True, type=str)
+@click.argument('end_year', required=True, type=str)
+@click.argument('title', required=True, type=str)
+def period(start_year, end_year, title):
+    start_year = convert_bc(start_year)
+    end_year = convert_bc(end_year)
+
+    append_row_to_periods([start_year, end_year, title])
+    pass
 
 
 @cli.command()

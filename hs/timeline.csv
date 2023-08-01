@@ -1,7 +1,7 @@
 -428,~,P,Plato is born in Athens,"philosophy, philosopher, philosophers"
 -384,~,P,Aristotle is born in Stagira,"philosophers, philosophy, ancient"
 -348,~,P,Plato dies in Athens,"philosophers, philosophy, ancient"
--336,,P,"Alexander the Great succeeds his father, Philip II, as king of Macedon at age 20","king, kings, ancient, empire"
+-336,,E,"Alexander the Great succeeds his father, Philip II, as king of Macedon at age 20","king, kings, ancient, empire"
 1410,~,M,Johannes Ockeghem is born in Saint-Ghislain,"musicians, europe, renaissance"
 1590,,L,"Shakespeare's first play, Henry VI first performed",plays
 1817,,S,Element #48 Cadmium was discovered,none
@@ -11,3 +11,8 @@
 1795,,M,Beethoven produces the Opus 1 piano trios for Prince Lichnowsky,none
 1800,,M,Beethoven's First Symphony premiers in Vienna,"symphony, orchestra, classical"
 1806,,E,"Holy Roman Emperor Francis II abdicates, bringing an end to the Holy Roman Empire","empire, abdication, king, napoleon"
+800,,E,"Pope Leo III crowns Frankish King Charlemagne as Roman Emperor, reviving the title and marking the beginning of what would be called the Holy Roman Empire","empire, king, pope"
+962,,E,Pope John XII crowns King of Germany Otto I as Roman Emperor after decades of dispute with the title. This marks the continuous existence of the empire for over 800 years.,"empire, kings"
+-356,,E,"Alexander III of Macedon, Alexander the Great, is born in Pella, Macedon","empire, king, greek"
+-323,,E,Alexander the Great dies in Babylon in the palace of Nebuchadnezzar II,"empire, greek, macedon, king"
+-343,,E,Aristotle begins tutoring Alexander the Great,"greek, philosophy, empire, king"
