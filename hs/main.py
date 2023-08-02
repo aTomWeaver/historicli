@@ -172,6 +172,23 @@ def convert_bc(year):
     return year
 
 
+def get_period_range(title):
+    with open(PERIODS_PATH, 'r', newline='') as periodscsv:
+        reader = csv.reader(periodscsv, delimiter=',')
+        # get a list of periods with the search term partially in title col
+        periods = [row for row in reader if title in row[2]]
+        for row in periods:
+            # convert the title col of the row into a list
+            row_with_title_list = [row[0], row[1], row[2].split(',')]
+            # search until an exact match of title is found in title col
+            for row_title in row_with_title_list[2]:
+                row_title = row_title.strip()
+                if title == row_title:
+                    # return the whole row it was found in
+                    start_year, end_year, _ = row
+                    return (row[0], row[1])
+
+
 @click.group()
 def cli():
     pass
@@ -209,9 +226,7 @@ def manual(year, category, description, tags):
 def period(start_year, end_year, title):
     start_year = convert_bc(start_year)
     end_year = convert_bc(end_year)
-
     append_row_to_periods([start_year, end_year, title])
-    pass
 
 
 @cli.command()
@@ -222,13 +237,19 @@ def period(start_year, end_year, title):
               help='Get only results in a given category.')
 @click.option('-g', '--grep', type=str,
               help='Get only results containing given string.')
-def ls(start_year, end_year, category, grep):
+@click.option('-p', '--period', type=str,
+              help='Get only results that fall in a given named time period.')
+def ls(start_year, end_year, category, grep, period):
     '''
     Prints the timeline with given parameters.
+    end_year is INCLUSIVE
     '''
     timeline_list = get_timeline_list()
 
-    # if start_year:
+    if period:
+        print(f'period: {period}')
+        start_year, end_year = get_period_range(period.strip())
+
     for matcher in BC_MATCHERS:
         if matcher in start_year:
             start_year = '-' + start_year.replace(matcher, '').strip()
@@ -242,7 +263,7 @@ def ls(start_year, end_year, category, grep):
                 end_year = '-' + end_year.replace(matcher, '').strip()
                 break
         timeline_list = [row for row in timeline_list
-                         if int(row[0]) < int(end_year)]
+                         if int(row[0]) <= int(end_year)]
 
     if category:
         for matcher, cat in CAT_MATCHERS.items():
