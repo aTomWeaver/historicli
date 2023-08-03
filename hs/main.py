@@ -194,20 +194,31 @@ def get_period_range(title):
 # CLI ################################################################
 ######################################################################
 
+
+def confirm_yes_no(message, yes_action, no_action):
+    '''Prompts the user with a given message and calls one of two
+    passed functions depending on the answer.
+    '''
+    confirmation = input(message + ' (y/n): ').lower()
+    if confirmation == 'y' or confirmation == 'yes':
+        yes_action()
+    else:
+        no_action()
+
+
 @click.group()
 def cli():
     pass
 
 
 @cli.command()
-# @click.option('-m', '--manual', type=(str, str, str, str))
 @click.option('-m', '--manual', type=str, help='Accepts a single'
               'comma-separated string with year, category, description,'
               'and n number of tags.')
-@click.option('-p', '--period', type=(str, str, str))
+@click.option('-p', '--period', type=(str, str, str), help='Accepts'
+              'a start year, (inclusive) end year, and a title')
 def add(manual, period):
     if manual:
-        print('Manual input')
         year, category, description, *tags = manual.split(',')
         tags = ','.join(tags)
         user_row = {
@@ -216,59 +227,29 @@ def add(manual, period):
                 "description": description,
                 "tags": tags
                 }
-        print(f'''
-              Year: {year}
-              Category: {category}
-              Description: {description}
-              Tags: {tags}
-
-              ''')
-        confirmation = input('Do you want to add this event? (y/n): ').lower()
-        if confirmation == 'y':
-            append_row(clean_timeline_input(user_row), 'timeline')
-        else:
-            print('Event dropped.')
-            return
+        user_row = clean_timeline_input(user_row)
+        year, _, category, description, tags = user_row
+        confirm_yes_no(f'\n\tYear: {year}\n'
+                       f'\tCategory: {category}\n'
+                       f'\tDescription: {description}\n'
+                       f'\tTags: {tags}\n\n'
+                       'Do you want to add this event?',
+                       lambda: append_row(user_row, 'timeline'),
+                       lambda: print('\nEvent dropped'))
     elif period:
-        print('period')
         start_year, end_year, title = period
         start_year = convert_if_bc(start_year).strip()
         end_year = convert_if_bc(end_year).strip()
-        append_row([start_year, end_year, title], 'periods')
-        pass
+        confirm_yes_no(f'\n\tStart Year: {start_year}\n'
+                       f'\tEnd Year: {end_year}\n'
+                       f'\tPeriod Title: {title}\n\n'
+                       'Do you want to add this period?',
+                       lambda: append_row([start_year, end_year, title],
+                                          'periods'),
+                       lambda: print('\nPeriod dropped'))
     else:
         user_row = clean_timeline_input(get_new_row_from_user())
         append_row(user_row, 'timeline')
-
-
-def prompt():
-    user_row = clean_timeline_input(get_new_row_from_user())
-    append_row(user_row, 'timeline')
-
-
-# @add.command()
-# @click.argument('year', required=True, type=str)
-# @click.argument('category', required=True, type=str)
-# @click.argument('description', required=True, type=str)
-# @click.argument('tags', required=False, type=str)
-# def manual(year, category, description, tags):
-#     input = {
-#             "year": year,
-#             "category": category,
-#             "description": description,
-#             "tags": tags
-#             }
-#     append_row(clean_timeline_input(input), 'timeline')
-
-
-# @add.command()
-# @click.argument('start_year', required=True, type=str)
-# @click.argument('end_year', required=True, type=str)
-# @click.argument('title', required=True, type=str)
-# def period(start_year, end_year, title):
-#     start_year = convert_if_bc(start_year).strip()
-#     end_year = convert_if_bc(end_year).strip()
-#     append_row([start_year, end_year, title], 'periods')
 
 
 @cli.command()
