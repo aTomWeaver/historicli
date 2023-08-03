@@ -15,6 +15,7 @@ COL_IDX = {
 }
 
 BC_MATCHERS = [
+    'b',
     'bc',
     'BC',
     'B.C.',
