@@ -27,14 +27,20 @@ COLORS = {
 }
 
 
-def get_timeline_list(source=TIMELINE_PATH):
-    '''Reads the source file and returns a list of the rows as lists.
-    Defaults to reading the main timeline path but can read a different
-    csv for importing mass dates'''
+def get_list(source):
+    '''Reads the periods file and returns a list of the rows as lists.'''
+    if source == 'timeline':
+        source = TIMELINE_PATH
+    elif source == 'periods':
+        source = PERIODS_PATH
+    else:
+        print('ERROR: Invalid source given.')
+        return
     with open(source, 'r', encoding='utf-8', newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
-        timeline_list = [row for row in reader]
-    return timeline_list
+        next(reader, None)
+        target_list = [row for row in reader]
+    return target_list
 
 
 def append_row(row, target):
@@ -52,6 +58,14 @@ def append_row(row, target):
         writer.writerow(row)
 
 
+def pad_year(year):
+    '''pad year with left spaces until 4 chars long'''
+    if len(year) < 4:
+        while len(year) < 4:
+            year = ' ' + year
+    return year
+
+
 def sort_timeline_list(timeline_list):
     sorted_timeline = sorted(timeline_list, key=lambda row: int(row[0]))
     return sorted_timeline
@@ -67,14 +81,6 @@ def filter_timeline_list(by, matcher, timeline_list):
 
 def format_timeline_list(timeline_list):
     '''formats the passed timeline_list and returns the output'''
-
-    def pad_year(year):
-        '''pad year with left spaces until 4 chars long'''
-        if len(year) < 4:
-            while len(year) < 4:
-                year = ' ' + year
-        return year
-
     formatted_list = []
 
     for row in timeline_list:
@@ -112,6 +118,27 @@ def format_timeline_list(timeline_list):
     return formatted_list
 
 
+def format_period_list(period_list):
+    formatted_list = []
+    period_list = sort_timeline_list(period_list)
+    for row in period_list:
+        formatted_row = ''
+
+        for index, year in enumerate((row[0], row[1])):
+            if int(year) < 0:
+                year = colored(pad_year(year[1:]) + ' BC', 'yellow')
+            else:
+                year = colored(pad_year(year), 'red')
+            if index == 0:
+                year += ' - '
+            formatted_row += year
+
+        period = colored(row[2], 'blue', attrs=['bold'])
+        formatted_row += f'\n\t{period}\n'
+        formatted_list.append(formatted_row)
+    return formatted_list
+
+
 def get_new_row_from_user():
     # TODO: reject invalid inputs
     # if 'birth, born, death, died, dies' in desc add relevant tag
@@ -123,7 +150,7 @@ def get_new_row_from_user():
     }
 
 
-def convert_if_bc(year):
+def convert_bc_to_neg(year):
     for matcher in BC_MATCHERS:
         if matcher in year:
             year = '-' + year.replace(matcher, '')
@@ -152,7 +179,7 @@ def clean_timeline_input(input):
             circa = ''
 
     # Clean year
-    year = convert_if_bc(year).strip()
+    year = convert_bc_to_neg(year).strip()
 
     # Clean category
     category = category.lower()
@@ -166,7 +193,21 @@ def clean_timeline_input(input):
 
     # Clean tags
     if not tags:
-        tags = 'none'
+        tags = ''
+    death_matchers = ['dies', 'died']
+    birth_matchers = ['is born', 'was born', 'birth']
+    for matcher in death_matchers:
+        if matcher in description:
+            if tags.strip() == '':
+                tags += 'death'
+            else:
+                tags += ', death'
+    for matcher in birth_matchers:
+        if matcher in description:
+            if tags.strip() == '':
+                tags += 'birth'
+            else:
+                tags += ', birth'
     tags = tags.lower()
 
     user_row.extend([year, circa, category, description, tags])
@@ -176,6 +217,7 @@ def clean_timeline_input(input):
 def get_period_range(title):
     with open(PERIODS_PATH, 'r', newline='') as periodscsv:
         reader = csv.reader(periodscsv, delimiter=',')
+        next(reader, None)
         # get a list of periods with the search term partially in title col
         periods = [row for row in reader if title in row[2]]
         for row in periods:
@@ -212,34 +254,22 @@ def cli():
 
 
 @cli.command()
-@click.option('-m', '--manual', type=str, help='Accepts a single'
-              'comma-separated string with year, category, description,'
+@click.option('-m', '--manual', type=str, help='Accepts a single '
+              'comma-delimited string with year, category, description, '
               'and n number of tags.')
-@click.option('-p', '--period', type=(str, str, str), help='Accepts'
+@click.option('-p', '--period', type=(str, str, str), help='Accepts '
               'a start year, (inclusive) end year, and a title')
 def add(manual, period):
-    if manual:
-        year, category, description, *tags = manual.split(',')
-        tags = ','.join(tags)
-        user_row = {
-                "year": year,
-                "category": category,
-                "description": description,
-                "tags": tags
-                }
-        user_row = clean_timeline_input(user_row)
-        year, _, category, description, tags = user_row
-        confirm_yes_no(f'\n\tYear: {year}\n'
-                       f'\tCategory: {category}\n'
-                       f'\tDescription: {description}\n'
-                       f'\tTags: {tags}\n\n'
-                       'Do you want to add this event?',
-                       lambda: append_row(user_row, 'timeline'),
-                       lambda: print('\nEvent dropped'))
-    elif period:
+    '''Add an event or time period. Calling add with no arguments
+    will prompt the user for event details to add.
+    '''
+    # manual = manual event
+    if period:
         start_year, end_year, title = period
-        start_year = convert_if_bc(start_year).strip()
-        end_year = convert_if_bc(end_year).strip()
+        start_year = convert_bc_to_neg(start_year).strip()
+        end_year = convert_bc_to_neg(end_year).strip()
+        title = title.lower()
+
         confirm_yes_no(f'\n\tStart Year: {start_year}\n'
                        f'\tEnd Year: {end_year}\n'
                        f'\tPeriod Title: {title}\n\n'
@@ -247,13 +277,32 @@ def add(manual, period):
                        lambda: append_row([start_year, end_year, title],
                                           'periods'),
                        lambda: print('\nPeriod dropped'))
+        return
+    if manual:
+        year, category, description, *tags = manual.split(',')
+        tags = ','.join(tags)
+        user_row = {"year": year,
+                    "category": category,
+                    "description": description,
+                    "tags": tags}
     else:
-        user_row = clean_timeline_input(get_new_row_from_user())
-        append_row(user_row, 'timeline')
+        user_row = get_new_row_from_user()
+
+    user_row = clean_timeline_input(user_row)
+    year, _, category, description, tags = user_row
+
+    confirm_yes_no(f'\n\tYear: {year}\n'
+                   f'\tCategory: {category}\n'
+                   f'\tDescription: {description}\n'
+                   f'\tTags: {tags}\n\n'
+                   'Do you want to add this event?',
+                   lambda: append_row(user_row, 'timeline'),
+                   lambda: print('\nEvent dropped'))
 
 
 @cli.command()
-@click.argument('start_year', default='1000000bc')
+@click.option('-s', '--start-year', type=str,
+              help='Get only results starting from start year.')
 @click.option('-e', '--end-year', type=str,
               help='Get only results up to end year.')
 @click.option('-c', '--category', type=str,
@@ -262,32 +311,38 @@ def add(manual, period):
               help='Get only results containing given string.')
 @click.option('-p', '--period', type=str,
               help='Get only results that fall in a given named time period.')
-def ls(start_year, end_year, category, grep, period):
+@click.option('-pl', '--period-list', type=str,
+              help='Get the list of currently available time periods.')
+def ls(start_year, end_year, category, grep, period, period_list):
     '''
     Prints the timeline with given parameters.
     end_year is INCLUSIVE
     '''
-    timeline_list = get_timeline_list()
+    if period_list:
+        for row in format_period_list(get_list('periods')):
+            click.echo(row)
+        return
+
+    timeline_list = get_list('timeline')
 
     if period:
-        print(f'Period: {period}')
+        print(f'Period: {period}\n')
         start_year, end_year = get_period_range(period.strip())
 
-    for matcher in BC_MATCHERS:
-        if matcher in start_year:
-            start_year = '-' + start_year.replace(matcher, '').strip()
-            break
+    # Get list from start year
+    if not start_year:
+        start_year = '10000000000bc'
+    start_year = convert_bc_to_neg(start_year).strip()
     timeline_list = [row for row in timeline_list
                      if int(row[0]) >= int(start_year)]
 
+    # Get list from end year
     if end_year:
-        for matcher in BC_MATCHERS:
-            if matcher in end_year:
-                end_year = '-' + end_year.replace(matcher, '').strip()
-                break
+        end_year = convert_bc_to_neg(end_year).strip()
         timeline_list = [row for row in timeline_list
                          if int(row[0]) <= int(end_year)]
 
+    # Get list with only category
     if category:
         for matcher, cat in CAT_MATCHERS.items():
             if category.lower().strip() == matcher:
@@ -296,9 +351,10 @@ def ls(start_year, end_year, category, grep, period):
         timeline_list = filter_timeline_list('category', category,
                                              timeline_list)
 
+    # Get list with search term
     if grep:
         timeline_list = [row for row in timeline_list
-                         if grep in row[3]+row[4]]
+                         if grep in (row[3]+row[4]).lower()]
 
     output = format_timeline_list(sort_timeline_list(timeline_list))
     for row in output:
@@ -326,4 +382,3 @@ def lowercasify_periods():
 
 if __name__ == '__main__':
     cli()
-    # lowercasify_periods()
