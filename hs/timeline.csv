@@ -1,20 +1,32 @@
--428,~,P,Plato is born in Athens,"philosophy, philosopher, philosophers"
--384,~,P,Aristotle is born in Stagira,"philosophers, philosophy, ancient"
--348,~,P,Plato dies in Athens,"philosophers, philosophy, ancient"
+-428,~,P,Plato is born in Athens,"philosophy, philosopher, philosophers, birth"
+-384,~,P,Aristotle is born in Stagira,"philosophers, philosophy, ancient, birth"
+-348,~,P,Plato dies in Athens,"philosophers, philosophy, ancient, death"
 -336,,E,"Alexander the Great succeeds his father, Philip II, as king of Macedon at age 20","king, kings, ancient, empire"
-1410,~,M,Johannes Ockeghem is born in Saint-Ghislain,"musicians, europe, renaissance"
+1410,~,M,Johannes Ockeghem is born in Saint-Ghislain,"musicians, europe, renaissance, birth"
 1590,,L,"Shakespeare's first play, Henry VI first performed",plays
 1817,,S,Element #48 Cadmium was discovered,none
 1860,,S,Element #55 Cesium was discovered,none
-1770,,M,Ludwig van Beethoven is born in Bonn,none
-1827,,M,Beethoven dies in Vienna at age 56,none
+1770,,M,Ludwig van Beethoven is born in Bonn,"birth"
+1827,,M,Beethoven dies in Vienna at age 56,"death"
 1795,,M,Beethoven produces the Opus 1 piano trios for Prince Lichnowsky,none
 1800,,M,Beethoven's First Symphony premiers in Vienna,"symphony, orchestra, classical"
 1806,,E,"Holy Roman Emperor Francis II abdicates, bringing an end to the Holy Roman Empire","empire, abdication, king, napoleon"
 800,,E,"Pope Leo III crowns Frankish King Charlemagne as Roman Emperor, reviving the title and marking the beginning of what would be called the Holy Roman Empire","empire, king, pope"
 962,,E,Pope John XII crowns King of Germany Otto I as Roman Emperor after decades of dispute with the title. This marks the continuous existence of the empire for over 800 years.,"empire, kings"
--356,,E,"Alexander III of Macedon, Alexander the Great, is born in Pella, Macedon","empire, king, greek"
--323,,E,Alexander the Great dies in Babylon in the palace of Nebuchadnezzar II,"empire, greek, macedon, king"
+-356,,E,"Alexander III of Macedon, Alexander the Great, is born in Pella, Macedon","empire, king, greek, birth"
+-323,,E,Alexander the Great dies in Babylon in the palace of Nebuchadnezzar II,"empire, greek, macedon, king, death"
 -343,,E,Aristotle begins tutoring Alexander the Great,"greek, philosophy, empire, king"
 1926,,A,"Warner Brothers produces the first movie with a soundtrack, Don Juan","movies, film, theater"
 1929,,A,"The Museum of Modern Art opens in Manhattan, nine days after the Wall Street Crash",museum
+1936,,B,The Spanish coup d'état of July 1939 begins the Spanish Civil War,"war, spain, europe"
+1939,,B,"Francisco Franco and the Nationalists enter the Spanish capital and declare victory, bringing an end to the Spanish Civil War","war, spain, europe"
+-322,,P,Aristotle dies in Chalcis,"ancient, antiquity, death"
+121,,E,Marcus Aurelius is born in Rome,"emperor, philospher, ruler, roman, birth"
+180,,E,"Marcus Aurelius dies in Vindobona, the site of modern-day Vienna","death, emperor, roman, rome"
+161,,E,Antoninus Pius dies and Marcus Aurelius becomes Roman emperor alongside his brother Lucius Verus,"emperor, ascension, rome, ruler, roman, death"
+1767,,A,"Jean-Honoré Fragonard paints ""L'Escarpolette"" or ""The Swing""","paintings, painting, the swing, rococo"
+1686,,S,Isaac Newton publishes Principia Mathematica,"science, math, mathematics, philosophy"
+1689,,P,John Locke publishes 'An Essay Concerning Human Understanding',"empiricism, enlightenment"
+1270,~,M,Poets and Musicians from the court of Alfonso X produce the 'Cantigas de Santa Maria',galician
+1756,,M,Wolfgang Amadeus Mozart is born in Salzburg,"wam, w. a. mozart, wa mozart, birth"
+1791,,M,W. A. Mozart dies in Vienna at the age of 35,death

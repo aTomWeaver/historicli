@@ -1,3 +1,4 @@
+from pprint import pprint
 import csv
 import click
 from termcolor import colored
@@ -6,6 +7,7 @@ import colored_traceback
 # from operator import itemgetter
 from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
+# colored_traceback for debugging
 colored_traceback.add_hook()
 
 TIMELINE_PATH = ('/home/tom/code/python/history_timeline/hs/'
@@ -35,26 +37,23 @@ def get_timeline_list(source=TIMELINE_PATH):
     return timeline_list
 
 
-def append_row_to_timeline(cleaned_row):
-    '''accepts an already cleaned row and appends it to the timeline.csv'''
-    with open(TIMELINE_PATH, 'a', newline='') as timelinecsv:
-        writer = csv.writer(timelinecsv, delimiter=',')
-        writer.writerow(cleaned_row)
+def append_row(row, target):
+    '''accepts an already cleaned row and appends it to the target csv'''
+    if target == 'timeline':
+        path = TIMELINE_PATH
+    elif target == 'periods':
+        path = PERIODS_PATH
+    else:
+        print(f'Invalid target. Cannot append to {target}')
+        return
 
-
-def append_row_to_periods(cleaned_row):
-    '''accepts an already cleaned row and appends it to the periods.csv'''
-    with open(PERIODS_PATH, 'a', newline='') as periodscsv:
-        writer = csv.writer(periodscsv, delimiter=',')
-        writer.writerow(cleaned_row)
-    pass
+    with open(path, 'a', newline='') as csv_file:
+        writer = csv.writer(csv_file, delimiter=',')
+        writer.writerow(row)
 
 
 def sort_timeline_list(timeline_list):
     sorted_timeline = sorted(timeline_list, key=lambda row: int(row[0]))
-    # with open(TIMELINE_PATH, 'w', encoding='utf-8', newline='') as csv_file:
-    #     writer = csv.writer(csv_file, delimiter=',')
-    #     writer.writerows(sorted_timeline)
     return sorted_timeline
 
 
@@ -76,7 +75,7 @@ def format_timeline_list(timeline_list):
                 year = ' ' + year
         return year
 
-    output = []
+    formatted_list = []
 
     for row in timeline_list:
         formatted_row = ''
@@ -109,17 +108,27 @@ def format_timeline_list(timeline_list):
                 _, _, desc_color = COLORS[row[2]]
                 formatted_row += ' ' + colored(item, desc_color)
 
-        output.append(formatted_row)
-    return output
+        formatted_list.append(formatted_row)
+    return formatted_list
 
 
 def get_new_row_from_user():
+    # TODO: reject invalid inputs
+    # if 'birth, born, death, died, dies' in desc add relevant tag
     return {
         'year': input('Year: '),
-        'category': input('Category: '),
+        'category': input('Category: ').lower(),
         'description': input('Description: '),
         'tags': input('Tags (comma-separated): ').lower()
     }
+
+
+def convert_if_bc(year):
+    for matcher in BC_MATCHERS:
+        if matcher in year:
+            year = '-' + year.replace(matcher, '')
+            break
+    return year
 
 
 def clean_timeline_input(input):
@@ -131,17 +140,9 @@ def clean_timeline_input(input):
     circa = ''
     year, category, description, tags = input.values()
 
-    if not tags:
-        tags = 'none'
     year = str(year)
-    category = category.lower()
 
-    for matcher in BC_MATCHERS:
-        if matcher in year:
-            year = '-' + year.replace(matcher, '')
-            break
-    year = year.strip()
-
+    # Clean circa
     for matcher in CIRCA_MATCHERS:
         if matcher in year:
             circa = r'~'
@@ -150,26 +151,26 @@ def clean_timeline_input(input):
         else:
             circa = ''
 
+    # Clean year
+    year = convert_if_bc(year).strip()
+
+    # Clean category
+    category = category.lower()
     for matcher in CAT_MATCHERS.keys():
         if matcher.lower() in category:
             category = CAT_MATCHERS[matcher]
             break
 
-    user_row.append(year)
-    user_row.append(circa)
-    user_row.append(category)
-    user_row.append(description.strip())
-    user_row.append(tags)
+    # Clean description
+    description = description.strip()
+
+    # Clean tags
+    if not tags:
+        tags = 'none'
+    tags = tags.lower()
+
+    user_row.extend([year, circa, category, description, tags])
     return user_row
-
-
-def convert_bc(year):
-    for matcher in BC_MATCHERS:
-        if matcher in year:
-            year = '-' + year.replace(matcher, '')
-            break
-        year = year.strip()
-    return year
 
 
 def get_period_range(title):
@@ -189,44 +190,85 @@ def get_period_range(title):
                     return (row[0], row[1])
 
 
+######################################################################
+# CLI ################################################################
+######################################################################
+
 @click.group()
 def cli():
     pass
 
 
-@cli.group()
-def add():
-    pass
+@cli.command()
+# @click.option('-m', '--manual', type=(str, str, str, str))
+@click.option('-m', '--manual', type=str, help='Accepts a single'
+              'comma-separated string with year, category, description,'
+              'and n number of tags.')
+@click.option('-p', '--period', type=(str, str, str))
+def add(manual, period):
+    if manual:
+        print('Manual input')
+        year, category, description, *tags = manual.split(',')
+        tags = ','.join(tags)
+        user_row = {
+                "year": year,
+                "category": category,
+                "description": description,
+                "tags": tags
+                }
+        print(f'''
+              Year: {year}
+              Category: {category}
+              Description: {description}
+              Tags: {tags}
+
+              ''')
+        confirmation = input('Do you want to add this event? (y/n): ').lower()
+        if confirmation == 'y':
+            append_row(clean_timeline_input(user_row), 'timeline')
+        else:
+            print('Event dropped.')
+            return
+    elif period:
+        print('period')
+        start_year, end_year, title = period
+        start_year = convert_if_bc(start_year).strip()
+        end_year = convert_if_bc(end_year).strip()
+        append_row([start_year, end_year, title], 'periods')
+        pass
+    else:
+        user_row = clean_timeline_input(get_new_row_from_user())
+        append_row(user_row, 'timeline')
 
 
-@add.command()
 def prompt():
-    append_row_to_timeline(clean_timeline_input(get_new_row_from_user()))
+    user_row = clean_timeline_input(get_new_row_from_user())
+    append_row(user_row, 'timeline')
 
 
-@add.command()
-@click.argument('year', required=True, type=str)
-@click.argument('category', required=True, type=str)
-@click.argument('description', required=True, type=str)
-@click.argument('tags', required=False, type=str)
-def manual(year, category, description, tags):
-    input = {
-            "year": year,
-            "category": year,
-            "description": description,
-            "tags": tags
-            }
-    append_row_to_timeline(clean_timeline_input(input))
+# @add.command()
+# @click.argument('year', required=True, type=str)
+# @click.argument('category', required=True, type=str)
+# @click.argument('description', required=True, type=str)
+# @click.argument('tags', required=False, type=str)
+# def manual(year, category, description, tags):
+#     input = {
+#             "year": year,
+#             "category": category,
+#             "description": description,
+#             "tags": tags
+#             }
+#     append_row(clean_timeline_input(input), 'timeline')
 
 
-@add.command()
-@click.argument('start_year', required=True, type=str)
-@click.argument('end_year', required=True, type=str)
-@click.argument('title', required=True, type=str)
-def period(start_year, end_year, title):
-    start_year = convert_bc(start_year)
-    end_year = convert_bc(end_year)
-    append_row_to_periods([start_year, end_year, title])
+# @add.command()
+# @click.argument('start_year', required=True, type=str)
+# @click.argument('end_year', required=True, type=str)
+# @click.argument('title', required=True, type=str)
+# def period(start_year, end_year, title):
+#     start_year = convert_if_bc(start_year).strip()
+#     end_year = convert_if_bc(end_year).strip()
+#     append_row([start_year, end_year, title], 'periods')
 
 
 @cli.command()
@@ -247,7 +289,7 @@ def ls(start_year, end_year, category, grep, period):
     timeline_list = get_timeline_list()
 
     if period:
-        print(f'period: {period}')
+        print(f'Period: {period}')
         start_year, end_year = get_period_range(period.strip())
 
     for matcher in BC_MATCHERS:
@@ -282,5 +324,25 @@ def ls(start_year, end_year, category, grep, period):
         click.echo(row)
 
 
+def lowercasify_periods():
+    with open(PERIODS_PATH, 'r', newline='') as periodscsv:
+        reader = csv.reader(periodscsv, delimiter=',')
+        # get a list of periods with the search term partially in title col
+        lowercase_periods = []
+        periods = [row for row in reader]
+        pprint(periods)
+        for row in periods:
+            new_row = []
+            for item in row:
+                new_row.append(item.lower())
+            lowercase_periods.append(new_row)
+        pprint(lowercase_periods)
+    with open(PERIODS_PATH, 'w', newline='') as periodscsv:
+        writer = csv.writer(periodscsv, delimiter=',')
+        for row in lowercase_periods:
+            writer.writerow(row)
+
+
 if __name__ == '__main__':
     cli()
+    # lowercasify_periods()
