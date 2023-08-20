@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "timeline"
+version = "0.0.1"
+description = "A timeline to contextualize historical events."
+dependencies = [
+    'click',
+    'termcolor',
+    'colored_traceback'
+]
+readme = "README.md"
+requires-python = ">=3.7"
+
+[project.scripts]
+tl = "timeline.main:cli"
+

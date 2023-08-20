@@ -1,20 +1,21 @@
 from pprint import pprint
 import csv
+from os import path
 import click
 from termcolor import colored
 import colored_traceback
 # from termcolor import cprint
 # from operator import itemgetter
-from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
+from .matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
 # colored_traceback for debugging
 colored_traceback.add_hook()
 
-TIMELINE_PATH = ('/home/tom/code/python/history_timeline/hs/'
-                 'timeline.csv')
-
-PERIODS_PATH = ('/home/tom/code/python/history_timeline/hs/'
-                'periods.csv')
+root_dir = path.join('/home', 'tom', 'code', 'python', 'history_timeline',
+                     'src', 'timeline')
+TIMELINE_PATH = path.join(root_dir, 'timeline.csv')
+PERIODS_PATH = path.join(root_dir, 'periods.csv')
+GROUPS_PATH = path.join(root_dir, 'groups.csv')
 
 COLORS = {
     'P': ('black', 'on_white', None),
@@ -33,6 +34,8 @@ def get_list(source):
         source = TIMELINE_PATH
     elif source == 'periods':
         source = PERIODS_PATH
+    elif source == 'groups':
+        source = GROUPS_PATH
     else:
         print('ERROR: Invalid source given.')
         return
@@ -49,6 +52,8 @@ def append_row(row, target):
         path = TIMELINE_PATH
     elif target == 'periods':
         path = PERIODS_PATH
+    elif target == 'groups':
+        path = GROUPS_PATH
     else:
         print(f'Invalid target. Cannot append to {target}')
         return
@@ -82,17 +87,14 @@ def filter_timeline_list(by, matcher, timeline_list):
 def format_timeline_list(timeline_list):
     '''formats the passed timeline_list and returns the output'''
     formatted_list = []
-
     for row in timeline_list:
         formatted_row = ''
-
         # Epoch
         if int(row[0]) < 0:
             formatted_row += 'BC' + ' '
             row[0] = row[0][1:]  # drop the '-'
         else:
             formatted_row += 'AD' + ' '
-
         for index, item in enumerate(row):
             # Circa
             if index == 1:
@@ -108,12 +110,10 @@ def format_timeline_list(timeline_list):
                 cat_color, highlight, _ = COLORS[item]
                 formatted_row += ' ' + \
                     colored(f' {item} ', cat_color, highlight)
-
             # Description
             elif index == 3:
                 _, _, desc_color = COLORS[row[2]]
                 formatted_row += ' ' + colored(item, desc_color)
-
         formatted_list.append(formatted_row)
     return formatted_list
 
@@ -259,7 +259,9 @@ def cli():
               'and n number of tags.')
 @click.option('-p', '--period', type=(str, str, str), help='Accepts '
               'a start year, (inclusive) end year, and a title')
-def add(manual, period):
+@click.option('-g', '--group', type=str, help='Accepts a title and'
+              'a list of terms to group together.')
+def add(manual, period, group):
     '''Add an event or time period. Calling add with no arguments
     will prompt the user for event details to add.
     '''
@@ -278,6 +280,19 @@ def add(manual, period):
                                           'periods'),
                        lambda: print('\nPeriod dropped'))
         return
+    if group:
+        title, *terms = group.split(',')
+        title = title.strip().lower()
+        terms = [term.strip() for term in terms]
+        terms = ','.join(terms)
+        confirm_yes_no(f'\n\tTitle: {title}\n'
+                       f'\tTerms: {terms}\n\n'
+                       'Do you want to add this group?',
+                       lambda: append_row([title, terms],
+                                          'groups'),
+                       lambda: print('\nGroup dropped'))
+        return
+
     if manual:
         year, category, description, *tags = manual.split(',')
         tags = ','.join(tags)
