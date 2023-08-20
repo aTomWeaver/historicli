@@ -1,6 +1,6 @@
 from pprint import pprint
 import csv
-from os import path
+import os
 import click
 from termcolor import colored
 import colored_traceback
@@ -11,11 +11,14 @@ from .matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 # colored_traceback for debugging
 colored_traceback.add_hook()
 
-root_dir = path.join('/home', 'tom', 'code', 'python', 'history_timeline',
-                     'src', 'timeline')
-TIMELINE_PATH = path.join(root_dir, 'timeline.csv')
-PERIODS_PATH = path.join(root_dir, 'periods.csv')
-GROUPS_PATH = path.join(root_dir, 'groups.csv')
+# PATHS
+root_dir = os.path.join('/', 'home', 'tom', 'code', 'python',
+                        'history_timeline', 'src', 'timeline')
+PATHS = {
+        "timeline": os.path.join(root_dir, 'timeline.csv'),
+        "periods": os.path.join(root_dir, 'periods.csv'),
+        "groups": os.path.join(root_dir, 'groups.csv'),
+        }
 
 COLORS = {
     'P': ('black', 'on_white', None),
@@ -28,37 +31,26 @@ COLORS = {
 }
 
 
-def get_list(source):
+def list_(source):
     '''Reads the periods file and returns a list of the rows as lists.'''
-    if source == 'timeline':
-        source = TIMELINE_PATH
-    elif source == 'periods':
-        source = PERIODS_PATH
-    elif source == 'groups':
-        source = GROUPS_PATH
-    else:
+    if source not in PATHS:
         print('ERROR: Invalid source given.')
         return
-    with open(source, 'r', encoding='utf-8', newline='') as csv_file:
+
+    with open(PATHS[source], 'r', encoding='utf-8', newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
-        next(reader, None)
+        next(reader, None)  # Skip the header row
         target_list = [row for row in reader]
     return target_list
 
 
 def append_row(row, target):
     '''accepts an already cleaned row and appends it to the target csv'''
-    if target == 'timeline':
-        path = TIMELINE_PATH
-    elif target == 'periods':
-        path = PERIODS_PATH
-    elif target == 'groups':
-        path = GROUPS_PATH
-    else:
+    if target not in PATHS:
         print(f'Invalid target. Cannot append to {target}')
         return
 
-    with open(path, 'a', newline='') as csv_file:
+    with open(PATHS[target], 'a', newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(row)
 
@@ -215,7 +207,7 @@ def clean_timeline_input(input):
 
 
 def get_period_range(title):
-    with open(PERIODS_PATH, 'r', newline='') as periodscsv:
+    with open(PATHS['periods'], 'r', newline='') as periodscsv:
         reader = csv.reader(periodscsv, delimiter=',')
         next(reader, None)
         # get a list of periods with the search term partially in title col
@@ -334,11 +326,11 @@ def ls(start_year, end_year, category, grep, period, period_list):
     end_year is INCLUSIVE
     '''
     if period_list:
-        for row in format_period_list(get_list('periods')):
+        for row in format_period_list(list_('periods')):
             click.echo(row)
         return
 
-    timeline_list = get_list('timeline')
+    timeline_list = list_('timeline')
 
     if period:
         print(f'Period: {period}\n')
@@ -377,7 +369,7 @@ def ls(start_year, end_year, category, grep, period, period_list):
 
 
 def lowercasify_periods():
-    with open(PERIODS_PATH, 'r', newline='') as periodscsv:
+    with open(PATHS['periods'], 'r', newline='') as periodscsv:
         reader = csv.reader(periodscsv, delimiter=',')
         # get a list of periods with the search term partially in title col
         lowercase_periods = []
@@ -389,7 +381,7 @@ def lowercasify_periods():
                 new_row.append(item.lower())
             lowercase_periods.append(new_row)
         pprint(lowercase_periods)
-    with open(PERIODS_PATH, 'w', newline='') as periodscsv:
+    with open(PATHS['periods'], 'w', newline='') as periodscsv:
         writer = csv.writer(periodscsv, delimiter=',')
         for row in lowercase_periods:
             writer.writerow(row)
