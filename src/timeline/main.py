@@ -360,6 +360,7 @@ def ls(start_year, end_year, category, grep, period, period_list):
 
     # Get list with search term
     if grep:
+        grep = grep.lower()
         timeline_list = [row for row in timeline_list
                          if grep in (row[3]+row[4]).lower()]
 
