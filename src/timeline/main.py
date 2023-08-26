@@ -6,7 +6,7 @@ from termcolor import colored
 import colored_traceback
 # from termcolor import cprint
 # from operator import itemgetter
-from .matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
+from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 
 # colored_traceback for debugging
 colored_traceback.add_hook()
