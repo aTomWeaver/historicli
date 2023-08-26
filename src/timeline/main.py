@@ -1,4 +1,5 @@
 from pprint import pprint
+import configparser
 import csv
 import os
 import click
@@ -11,9 +12,12 @@ from matchers import COL_IDX, BC_MATCHERS, CIRCA_MATCHERS, CAT_MATCHERS
 # colored_traceback for debugging
 colored_traceback.add_hook()
 
+# CONFIG
+config = configparser.ConfigParser()
+config.read('./config.ini')
+root_dir = config['PATHS']['root_dir']
+
 # PATHS
-root_dir = os.path.join('/', 'home', 'tom', 'code', 'python',
-                        'history_timeline', 'src', 'timeline')
 PATHS = {
         "timeline": os.path.join(root_dir, 'timeline.csv'),
         "periods": os.path.join(root_dir, 'periods.csv'),
